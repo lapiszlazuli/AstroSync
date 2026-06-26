@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AstroSync — Detalle de Objeto Celeste</title>
+  <meta name="description" content="Información detallada de estrellas, planetas y objetos del cielo profundo en AstroSync.">
+  <meta name="theme-color" content="#060810">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/starmap.css">
+  <style>
+    /* ── Object detail panel ──────────────────── */
+    #detail-panel {
+      position: fixed;
+      top: var(--nav-h);
+      right: 0;
+      width: 380px;
+      bottom: var(--bottom-h);
+      background: rgba(8, 11, 22, 0.95);
+      border-left: 1px solid var(--border);
+      z-index: 90;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #detail-header {
+      padding: 22px 22px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    #detail-obj-name {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--accent-gold);
+      letter-spacing: 0.03em;
+      margin-bottom: 4px;
+    }
+    #detail-obj-con {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.20em;
+      color: var(--text-muted);
+    }
+
+    #detail-body { flex: 1; overflow-y: auto; padding: 20px 22px; }
+
+    .detail-section { margin-bottom: 20px; }
+    .detail-section-title {
+      font-family: var(--font-mono);
+      font-size: 7px;
+      letter-spacing: 0.24em;
+      color: var(--text-muted);
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 10px;
+    }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 10px;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-key { color: var(--text-muted); }
+    .detail-val { color: var(--text-primary); }
+    .detail-val.highlight { color: var(--accent-gold); }
+
+    #detail-desc {
+      font-family: var(--font-text);
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.75;
+    }
+
+    /* Type badge */
+    .type-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 7px;
+      letter-spacing: 0.18em;
+      border: 1px solid var(--border-bright);
+      padding: 2px 8px;
+      margin-top: 6px;
+      color: var(--text-secondary);
+    }
+    .type-badge.estrella { border-color: var(--accent-blue-dim); color: var(--accent-blue-dim); }
+    .type-badge.planeta  { border-color: var(--accent-gold-dim); color: var(--accent-gold-dim); }
+    .type-badge.messier  { border-color: #3A6A40; color: #5A9A60; }
+
+    /* Actions */
+    #detail-actions {
+      padding: 16px 22px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* Color indicator for spectral type */
+    .spectral-bar {
+      height: 3px;
+      width: 100%;
+      margin-top: 8px;
+      background: linear-gradient(to right,
+        #5A72FF 0%, #7B9EFF 14%, #C0D0FF 28%,
+        #F7F7FF 42%, #FFE8D0 56%, #FFB870 70%, #FF6060 100%);
+    }
+    .spectral-marker {
+      width: 8px; height: 8px;
+      border: 1px solid white;
+      border-radius: 50%;
+      background: white;
+      margin-top: -5px;
+      position: relative;
+    }
+
+    /* Altitude arc visualization */
+    .alt-arc-wrap {
+      text-align: center;
+      margin: 10px 0;
+    }
+    .alt-arc-label {
+      font-family: var(--font-mono);
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+    .alt-arc-label.visible-alt { color: var(--success); }
+    .alt-arc-label.below-alt   { color: var(--text-muted); }
+    .alt-arc-sub {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.14em;
+      margin-top: 2px;
+    }
+
+    /* Spectral color dot */
+    .spectral-dot {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    /* Panels adjust when detail panel is open */
+    #detail-panel ~ #bottom-bar { right: 380px; }
+
+    /* Empty state */
+    #detail-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      text-align: center;
+    }
+    #detail-empty-title {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.18em;
+      margin-bottom: 10px;
+    }
+    #detail-empty-sub {
+      font-family: var(--font-text);
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    /* Search in detail page */
+    #detail-search-wrap {
+      padding: 14px 22px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    #detail-search {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 8px 10px;
+      box-sizing: border-box;
+      outline: none;
+    }
+    #detail-search:focus { border-color: var(--border-bright); }
+    #detail-search::placeholder { color: var(--text-muted); }
+
+    #search-results-list { margin-top: 10px; max-height: 200px; overflow-y: auto; }
+    .search-result-item {
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: padding-left 0.15s;
+    }
+    .search-result-item:hover { padding-left: 8px; }
+    .search-result-item:last-child { border-bottom: none; }
+    .result-type-badge {
+      font-family: var(--font-mono);
+      font-size: 7px;
+      letter-spacing: 0.1em;
+      border: 1px solid var(--border);
+      padding: 1px 5px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .result-name {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-primary);
+      flex: 1;
+    }
+    .result-mag {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--accent-gold);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── LOADING ──────────────────────────────── -->
+<div id="loading-screen">
+  <div class="loading-logo">ASTROSYNC</div>
+  <div class="loading-sub">DETALLE DE OBJETO</div>
+  <div class="loading-bar-wrap"><div class="loading-bar" id="loading-bar"></div></div>
+  <div class="loading-status" id="loading-status">Localizando objeto...</div>
+</div>
+
+<!-- ── CANVAS ───────────────────────────────── -->
+<canvas id="starmap-canvas"></canvas>
+<div id="labels-layer"></div>
+<div id="sky-crosshair"></div>
+
+<!-- ══════════════════════════════════════════
+     TOP NAV
+══════════════════════════════════════════ -->
+<nav id="top-nav">
+  <div id="nav-logo">
+    <span class="logo-text">ASTROSYNC</span>
+    <span class="logo-sub">DETALLE</span>
+  </div>
+  <div id="nav-links">
+    <a href="index.html" class="nav-btn">MAPA ESTELAR</a>
+    <a href="dashboard.html" class="nav-btn">DASHBOARD</a>
+  </div>
+  <div id="nav-right">
+    <div id="date-display">
+      <span id="date-label">----.--.--</span>
+      <span id="time-label">--:--:--</span>
+    </div>
+    <div id="location-display">Detectando...</div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     LEFT INFO
+══════════════════════════════════════════ -->
+<div id="left-info">
+  <div class="info-section">
+    <div class="info-title">TIEMPO LOCAL</div>
+    <div id="current-time-display">--:--:--</div>
+    <div id="current-date-display">---</div>
+  </div>
+  <div class="info-section">
+    <div class="info-title">UBICACIÓN</div>
+    <div class="info-value" id="current-location">Detectando...</div>
+  </div>
+  <div class="info-section">
+    <div class="info-title">PLANETAS VISIBLES</div>
+    <div id="visible-planets"></div>
+  </div>
+  <div class="info-section" style="border-bottom:none;">
+    <div class="info-title">ACCESO RÁPIDO</div>
+    <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px;">
+      <a href="index.html" class="panel-btn" style="text-align:center;display:block;text-decoration:none;">MAPA ESTELAR</a>
+      <a href="dashboard.html" class="panel-btn" style="text-align:center;display:block;text-decoration:none;">DASHBOARD</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     OBJECT DETAIL PANEL
+══════════════════════════════════════════ -->
+<div id="detail-panel">
+
+  <!-- Search -->
+  <div id="detail-search-wrap">
+    <input type="text" id="detail-search" placeholder="Buscar objeto... (Sirius, M42, Júpiter)">
+    <div id="search-results-list"></div>
+  </div>
+
+  <!-- Header -->
+  <div id="detail-header">
+    <div id="detail-obj-name">—</div>
+    <div id="detail-obj-con"></div>
+    <div id="detail-type-badge"></div>
+  </div>
+
+  <!-- Body -->
+  <div id="detail-body">
+    <!-- Empty state -->
+    <div id="detail-empty">
+      <div id="detail-empty-title">NINGÚN OBJETO SELECCIONADO</div>
+      <div id="detail-empty-sub">
+        Busca un objeto arriba, o vuelve al mapa estelar y haz clic en cualquier estrella, planeta u objeto Messier.
+      </div>
+      <a href="index.html" class="panel-btn" style="text-decoration:none;">IR AL MAPA ESTELAR</a>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div id="detail-actions" style="display:none;">
+    <button class="btn-primary" id="btn-goto-map">APUNTAR EN EL MAPA</button>
+    <button class="panel-btn" id="btn-log-obs">REGISTRAR OBSERVACIÓN</button>
+    <a href="index.html" class="panel-btn" style="text-align:center;display:block;text-decoration:none;">VOLVER AL MAPA</a>
+  </div>
+</div>
+
+<!-- ── BOTTOM BAR ─────────────────────────── -->
+<div id="bottom-bar" style="right:380px;">
+  <div class="bottom-segment">
+    <span class="bottom-label">MIRANDO</span>
+    <span class="bottom-value" id="view-az">Az ---°</span>
+    <span class="bottom-value" id="view-alt">Alt ---°</span>
+  </div>
+  <div class="bottom-segment">
+    <span class="bottom-label">OBJETO SELECCIONADO</span>
+    <span class="bottom-value highlight" id="cursor-obj-name">—</span>
+  </div>
+  <div class="bottom-segment">
+    <span class="bottom-hint">Clic en el mapa para identificar objetos</span>
+  </div>
+</div>
+
+<!-- ── Scripts ───────────────────────────── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.js"></script>
+<script src="js/catalog.js"></script>
+<script src="js/astro.js"></script>
+<script src="js/starmap.js"></script>
+
+<script>
+'use strict';
+
+const SPECTRAL_COLORS_CSS = {
+  O:'#9BB0FF', B:'#AABFFF', A:'#CAD7FF', F:'#F8F7FF',
+  G:'#FFF4EA', K:'#FFD2A1', M:'#FF8161'
+};
+
+let currentObj = null;
+
+// ── Parse URL param ───────────────────────────
+function getURLParam(key) {
+  return new URLSearchParams(window.location.search).get(key);
+}
+
+// ── Show object data in panel ─────────────────
+function showObject(obj, type) {
+  currentObj = { obj, type };
+  document.getElementById('detail-empty').style.display   = 'none';
+  document.getElementById('detail-actions').style.display = 'flex';
+  document.getElementById('cursor-obj-name').textContent  = obj.name || '—';
+
+  document.getElementById('detail-obj-name').textContent = obj.name || '—';
+  document.getElementById('detail-obj-con').textContent  = (obj.con || '').toUpperCase();
+
+  const badge = document.getElementById('detail-type-badge');
+  const badgeClass = type === 'star' ? 'estrella' : type === 'planet' ? 'planeta' : 'messier';
+  badge.innerHTML = `<span class="type-badge ${badgeClass}">${
+    type==='star'?'ESTRELLA':type==='planet'?'PLANETA':'OBJETO DEL CIELO PROFUNDO'
+  }</span>`;
+
+  // Compute alt/az
+  const lst = AstroCalc.computeLST(AstroMap.getDate(), AstroMap.getLocation().lon);
+  let altVal = null, azVal = null;
+  if(obj.ra != null && obj.dec != null) {
+    const h = AstroCalc.equatorialToHorizontal(obj.ra, obj.dec, lst, AstroMap.getLocation().lat);
+    altVal = h.alt; azVal = h.az;
+  }
+
+  // Build body content
+  const body = document.getElementById('detail-body');
+  body.innerHTML = '';
+
+  // Altitude widget
+  if(altVal !== null) {
+    const isVis = altVal > 0;
+    body.innerHTML += `
+      <div class="detail-section">
+        <div class="detail-section-title">POSICIÓN ACTUAL</div>
+        <div class="alt-arc-wrap">
+          <div class="alt-arc-label ${altVal>10?'visible-alt':altVal<0?'below-alt':''}">${altVal.toFixed(1)}°</div>
+          <div class="alt-arc-sub">ALTITUD ${isVis?'— VISIBLE SOBRE EL HORIZONTE':'— BAJO EL HORIZONTE'}</div>
+        </div>
+        <div class="detail-row">
+          <span class="detail-key">Azimut</span>
+          <span class="detail-val">${azVal.toFixed(1)}°</span>
+        </div>
+      </div>`;
+  }
+
+  // Coordinates section
+  let coordsHTML = '<div class="detail-section"><div class="detail-section-title">COORDENADAS ECUATORIALES (J2000)</div>';
+  if(obj.ra  != null) coordsHTML += `<div class="detail-row"><span class="detail-key">Asc. Recta</span><span class="detail-val">${AstroCalc.formatRA(obj.ra)}</span></div>`;
+  if(obj.dec != null) coordsHTML += `<div class="detail-row"><span class="detail-key">Declinación</span><span class="detail-val">${AstroCalc.formatDec(obj.dec)}</span></div>`;
+  if(obj.mag != null) coordsHTML += `<div class="detail-row"><span class="detail-key">Magnitud visual</span><span class="detail-val highlight">${Number(obj.mag).toFixed(2)}</span></div>`;
+  coordsHTML += '</div>';
+  body.innerHTML += coordsHTML;
+
+  // Type-specific info
+  if(type === 'star' && obj.sp) {
+    const cssColor = SPECTRAL_COLORS_CSS[obj.sp] || '#FFFFFF';
+    body.innerHTML += `
+      <div class="detail-section">
+        <div class="detail-section-title">TIPO ESPECTRAL</div>
+        <div class="detail-row">
+          <span class="detail-key">Clase</span>
+          <span class="detail-val"><span class="spectral-dot" style="background:${cssColor}"></span>${obj.sp}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-key">Temperatura</span>
+          <span class="detail-val">${{O:'>30,000 K',B:'10,000–30,000 K',A:'7,500–10,000 K',F:'6,000–7,500 K',G:'5,200–6,000 K',K:'3,700–5,200 K',M:'<3,700 K'}[obj.sp]||'—'}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-key">Color</span>
+          <span class="detail-val">${{O:'Azul intenso',B:'Azul-blanco',A:'Blanco-azulado',F:'Blanco-amarillo',G:'Amarillo',K:'Naranja',M:'Rojo-naranja'}[obj.sp]||'—'}</span>
+        </div>
+      </div>`;
+  }
+
+  if(type === 'messier' && obj.type_str) {
+    body.innerHTML += `
+      <div class="detail-section">
+        <div class="detail-section-title">CLASIFICACIÓN</div>
+        <div class="detail-row">
+          <span class="detail-key">Tipo</span>
+          <span class="detail-val">${obj.type_str || obj.type || '—'}</span>
+        </div>
+      </div>`;
+  }
+
+  // Description
+  if(obj.desc) {
+    body.innerHTML += `
+      <div class="detail-section">
+        <div class="detail-section-title">DESCRIPCIÓN</div>
+        <p id="detail-desc">${obj.desc}</p>
+      </div>`;
+  }
+
+  // Look at in map
+  if(obj.ra != null) AstroMap.lookAt(obj.ra, obj.dec);
+
+  // Wire action buttons
+  document.getElementById('btn-goto-map').onclick = () => {
+    if(obj.ra != null) {
+      const url = `index.html?lookAt=${obj.ra},${obj.dec}`;
+      window.location.href = url;
+    }
+  };
+  document.getElementById('btn-log-obs').onclick = () => alert(`Observación de ${obj.name} registrada. (Función disponible con API)`);
+}
+
+// ── Search ────────────────────────────────────
+function setupSearch() {
+  const input   = document.getElementById('detail-search');
+  const results = document.getElementById('search-results-list');
+
+  input.addEventListener('input', () => {
+    const q = input.value.toLowerCase().trim();
+    if(!q || q.length < 2) { results.innerHTML = ''; return; }
+
+    const found = [];
+    CATALOG.stars.filter(s => s.name.toLowerCase().includes(q)).slice(0,6)
+      .forEach(s => found.push({ data:s, type:'star', label:'ESTRELLA' }));
+    CATALOG.planets.filter(p => p.name.toLowerCase().includes(q))
+      .forEach(p => found.push({ data:p, type:'planet', label:'PLANETA' }));
+    CATALOG.messier.filter(m => m.name.toLowerCase().includes(q) || (m.desc||'').toLowerCase().includes(q)).slice(0,4)
+      .forEach(m => found.push({ data:{...m, type_str:m.type}, type:'messier', label:m.type.split(' ')[0].toUpperCase() }));
+
+    if(!found.length) { results.innerHTML = '<div style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);padding:8px 0;">Sin resultados.</div>'; return; }
+
+    results.innerHTML = found.map((r,i) => `
+      <div class="search-result-item" data-idx="${i}">
+        <span class="result-type-badge">${r.label}</span>
+        <span class="result-name">${r.data.name}</span>
+        <span class="result-mag">${r.data.mag!=null?'mag '+Number(r.data.mag).toFixed(1):''}</span>
+      </div>`).join('');
+
+    results.querySelectorAll('.search-result-item').forEach((el, i) => {
+      el.addEventListener('click', () => {
+        results.innerHTML = '';
+        input.value = '';
+        let obj = found[i].data;
+        if(found[i].type === 'planet') {
+          const eq = AstroCalc.getPlanetEquatorial(obj.body, AstroMap.getDate());
+          if(eq) obj = { ...obj, ra:eq.ra, dec:eq.dec, mag:eq.mag };
+        }
+        showObject(obj, found[i].type);
+      });
+    });
+  });
+}
+
+// ── Clock & Location ──────────────────────────
+function startClock() {
+  function tick() {
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    const t = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    ['current-time-display','time-label'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.textContent=t;
+    });
+    const el4 = document.getElementById('current-date-display');
+    if(el4) el4.textContent = now.toLocaleDateString('es-ES',{weekday:'short',year:'numeric',month:'short',day:'numeric'}).toUpperCase();
+    const el3 = document.getElementById('date-label');
+    if(el3) el3.textContent = now.toISOString().split('T')[0].replace(/-/g,'.');
+  }
+  tick(); setInterval(tick,1000);
+}
+
+function detectLocation() {
+  const loc = document.getElementById('current-location');
+  const nav = document.getElementById('location-display');
+  if(!navigator.geolocation){ if(loc) loc.textContent='Sin geoloc.'; return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    AstroMap.setLocation(pos.coords.latitude, pos.coords.longitude);
+    const ls=`${Math.abs(pos.coords.latitude).toFixed(2)}° ${pos.coords.latitude>=0?'N':'S'}`;
+    const ll=`${Math.abs(pos.coords.longitude).toFixed(2)}° ${pos.coords.longitude>=0?'E':'O'}`;
+    if(loc) loc.innerHTML=`<div>${ls}</div><div>${ll}</div>`;
+    if(nav) nav.textContent=`${ls}  ${ll}`;
+    updatePlanetList();
+  }, ()=>{ if(loc) loc.textContent='Madrid (defecto)'; }, {timeout:6000});
+}
+
+function updatePlanetList() {
+  const container = document.getElementById('visible-planets');
+  if(!container) return;
+  const planets = AstroMap.getPlanetVisibility();
+  container.innerHTML = planets.map(p => `
+    <div class="planet-row">
+      <div class="planet-dot" style="background:${p.colorHex}"></div>
+      <span class="planet-name">${p.name}</span>
+      <span class="planet-alt ${p.alt>10?'visible':''}">${p.alt!=null?(p.alt>0?'+':'')+p.alt+'°':'—'}</span>
+    </div>`).join('');
+}
+
+// ── Boot ─────────────────────────────────────
+window.addEventListener('load', function() {
+  const bar = document.getElementById('loading-bar');
+  bar.style.width = '30%';
+
+  setTimeout(() => {
+    AstroMap.init(document.getElementById('starmap-canvas'));
+    bar.style.width = '70%';
+
+    startClock();
+    detectLocation();
+    setupSearch();
+    updatePlanetList();
+
+    // Check URL param: ?name=Sirius
+    const name = getURLParam('name');
+    if(name) {
+      const star = CATALOG.stars.find(s => s.name.toLowerCase() === name.toLowerCase());
+      if(star) { showObject(star, 'star'); }
+      else {
+        const planet = CATALOG.planets.find(p => p.name.toLowerCase() === name.toLowerCase());
+        if(planet) {
+          const eq = AstroCalc.getPlanetEquatorial(planet.body, AstroMap.getDate());
+          showObject({...planet, ra:eq?eq.ra:null, dec:eq?eq.dec:null, mag:eq?eq.mag:null}, 'planet');
+        } else {
+          const obj = CATALOG.messier.find(m => m.name.toLowerCase() === name.toLowerCase());
+          if(obj) showObject({...obj, type_str:obj.type}, 'messier');
+        }
+      }
+    }
+
+    bar.style.width = '100%';
+    setTimeout(() => {
+      const ls = document.getElementById('loading-screen');
+      ls.classList.add('fade-out');
+      setTimeout(() => ls.style.display = 'none', 700);
+    }, 300);
+  }, 400);
+});
+</script>
+
+</body>
+</html>

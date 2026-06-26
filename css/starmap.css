@@ -1,0 +1,224 @@
+/* ═══════════════════════════════════════════════
+   ASTROSYNC — starmap.css
+   Estilos específicos del mapa estelar 3D
+   Incluido en: index.html, object-detail.html
+═══════════════════════════════════════════════ */
+
+/* ── Canvas ──────────────────────────────────── */
+#starmap-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  z-index: 0;
+  display: block;
+  cursor: grab;
+  background: #060810;
+}
+#starmap-canvas:active { cursor: grabbing; }
+
+/* ── Planet / Object Label Layer ─────────────── */
+#labels-layer {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.planet-label {
+  position: absolute;
+  transform: translate(-50%, -140%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--text-primary);
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  pointer-events: none;
+  white-space: nowrap;
+  transition: opacity 0.2s ease;
+}
+
+/* Sol — etiqueta especial con resplandor dorado */
+.planet-label.sun-label {
+  border-color: #FFD700;
+  color: #FFE066;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.35);
+  text-shadow: 0 0 6px rgba(255, 224, 102, 0.6);
+}
+
+.planet-label .dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.star-label {
+  position: absolute;
+  transform: translate(10px, -50%);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 0.7;
+}
+
+/* ── Tooltip ─────────────────────────────────── */
+#tooltip {
+  position: fixed;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-bright);
+  padding: 10px 14px;
+  z-index: 500;
+  pointer-events: none;
+  max-width: 260px;
+  min-width: 180px;
+  display: none;
+}
+#tooltip.visible { display: block; }
+
+#tooltip-name {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-gold);
+  margin-bottom: 2px;
+  letter-spacing: 0.04em;
+}
+#tooltip-constellation {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.tooltip-rows { margin-bottom: 6px; }
+.tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--border);
+}
+.tooltip-row:last-child { border-bottom: none; }
+.tooltip-key { color: var(--text-muted); }
+.tooltip-val { color: var(--text-primary); text-align: right; }
+#tooltip-desc {
+  font-family: var(--font-text);
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+  line-height: 1.55;
+}
+
+/* ── Sky view indicator ──────────────────────── */
+#sky-crosshair {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px; height: 14px;
+  pointer-events: none;
+  z-index: 20;
+  opacity: 0.28;
+}
+#sky-crosshair::before,
+#sky-crosshair::after {
+  content: '';
+  position: absolute;
+  background: var(--text-primary);
+}
+#sky-crosshair::before {
+  width: 1px; height: 100%;
+  left: 50%; top: 0;
+  transform: translateX(-50%);
+}
+#sky-crosshair::after {
+  height: 1px; width: 100%;
+  top: 50%; left: 0;
+  transform: translateY(-50%);
+}
+
+/* ── Compass rose (bottom left corner) ──────── */
+#compass {
+  position: fixed;
+  bottom: calc(var(--bottom-h) + 16px);
+  left: calc(var(--left-w) + 16px);
+  width: 64px; height: 64px;
+  z-index: 85;
+  opacity: 0.75;
+  transition: opacity 0.3s;
+}
+#compass:hover { opacity: 1; }
+.compass-ring {
+  width: 100%; height: 100%;
+  border: 1px solid var(--border-bright);
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 8, 16, 0.55);
+  backdrop-filter: blur(4px);
+}
+.compass-n, .compass-s, .compass-e, .compass-w {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0;
+  transition: color 0.2s, text-shadow 0.2s;
+  pointer-events: none;
+}
+.compass-n { top: 3px; left: 50%; transform: translateX(-50%); }
+.compass-s { bottom: 3px; left: 50%; transform: translateX(-50%); }
+.compass-e { right: 5px; top: 50%; transform: translateY(-50%); }
+.compass-w { left: 5px; top: 50%; transform: translateY(-50%); }
+/* Highlighted cardinal — the direction currently being faced */
+.compass-n.active { color: var(--accent-gold); text-shadow: 0 0 6px rgba(255,215,0,0.7); }
+.compass-e.active, .compass-s.active, .compass-w.active {
+  color: var(--text-primary);
+  text-shadow: 0 0 4px rgba(180,200,255,0.6);
+}
+.compass-center {
+  width: 4px; height: 4px;
+  background: var(--accent-gold);
+  border-radius: 50%;
+  position: absolute;
+  z-index: 2;
+}
+/* Compass needle — rotated via JS to point North */
+.compass-needle {
+  position: absolute;
+  width: 2px;
+  height: 46%;
+  bottom: 50%;
+  left: calc(50% - 1px); /* centrado sin transform para que JS solo rote */
+  transform-origin: bottom center;
+  transform: rotate(0deg);
+  background: linear-gradient(to top, transparent 0%, var(--accent-gold) 60%, #fff 100%);
+  border-radius: 2px 2px 0 0;
+  z-index: 1;
+}
+
+/* ── FOV indicator ───────────────────────────── */
+#fov-indicator {
+  position: fixed;
+  bottom: calc(var(--bottom-h) + 10px);
+  right: 12px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 0.10em;
+  z-index: 85;
+}

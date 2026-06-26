@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AstroSync — Dashboard</title>
+  <meta name="description" content="AstroSync Dashboard: estadísticas de observación, sincronización con la app Android y posiciones planetarias.">
+  <meta name="theme-color" content="#060810">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/starmap.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+<!-- ── LOADING ──────────────────────────────── -->
+<div id="loading-screen">
+  <div class="loading-logo">ASTROSYNC</div>
+  <div class="loading-sub">DASHBOARD</div>
+  <div class="loading-bar-wrap">
+    <div class="loading-bar" id="loading-bar"></div>
+  </div>
+  <div class="loading-status" id="loading-status">Cargando datos...</div>
+</div>
+
+<!-- ── CANVAS — always present ──────────────── -->
+<canvas id="starmap-canvas"></canvas>
+<div id="labels-layer"></div>
+<div id="sky-crosshair"></div>
+
+<!-- ══════════════════════════════════════════
+     TOP NAV
+══════════════════════════════════════════ -->
+<nav id="top-nav">
+  <div id="nav-logo">
+    <span class="logo-text">ASTROSYNC</span>
+    <span class="logo-sub">CARTOGRAFÍA ESTELAR</span>
+  </div>
+  <div id="nav-links">
+    <a href="index.html" class="nav-btn">CIELO</a>
+    <a href="index.html" class="nav-btn">CATÁLOGO</a>
+    <a href="index.html" class="nav-btn">OBSERVACIONES</a>
+    <span class="nav-btn active">DASHBOARD</span>
+  </div>
+  <div id="nav-right">
+    <div id="date-control">
+      <div id="date-display">
+        <span id="date-label">----.--.--</span>
+        <span id="time-label">--:--:--</span>
+      </div>
+    </div>
+    <div id="location-display">Detectando...</div>
+    <button id="btn-login">ACCEDER</button>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     LEFT INFO PANEL
+══════════════════════════════════════════ -->
+<div id="left-info">
+  <div class="info-section">
+    <div class="info-title">TIEMPO LOCAL</div>
+    <div id="current-time-display">--:--:--</div>
+    <div id="current-date-display">---</div>
+  </div>
+  <div class="info-section">
+    <div class="info-title">UBICACIÓN</div>
+    <div class="info-value" id="current-location">Detectando...</div>
+  </div>
+  <div class="info-section">
+    <div class="info-title">PLANETAS</div>
+    <div id="visible-planets"></div>
+  </div>
+  <div class="info-section" style="border-bottom:none;">
+    <div class="info-title">NAVEGACIÓN</div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">
+      <a href="index.html" class="panel-btn" style="text-align:center;display:block;text-decoration:none;">MAPA ESTELAR</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     DASHBOARD CONTENT
+══════════════════════════════════════════ -->
+<div id="dashboard-overlay">
+  <div id="dash-grid">
+
+    <!-- Header -->
+    <div id="dash-page-header">
+      <div>
+        <div id="dash-page-title">DASHBOARD DE OBSERVACIONES</div>
+        <div id="dash-page-sub">Sincronizado con AstroSync Android</div>
+      </div>
+      <a href="index.html" class="dash-back-btn">← VOLVER AL MAPA</a>
+    </div>
+
+    <!-- Stats row -->
+    <div class="dash-card col-full">
+      <div class="dash-card-title">ESTADÍSTICAS GLOBALES <span>HOY</span></div>
+      <div class="dash-stats-row">
+        <div class="dash-stat-item">
+          <div class="dash-stat-num" id="stat-obs">—</div>
+          <div class="dash-stat-label">OBSERVACIONES</div>
+        </div>
+        <div class="dash-stat-item">
+          <div class="dash-stat-num" id="stat-sessions">—</div>
+          <div class="dash-stat-label">SESIONES</div>
+        </div>
+        <div class="dash-stat-item">
+          <div class="dash-stat-num" id="stat-planets">—</div>
+          <div class="dash-stat-label">PLANETAS VISIBLES</div>
+        </div>
+        <div class="dash-stat-item">
+          <div class="dash-stat-num" id="stat-catalog">105</div>
+          <div class="dash-stat-label">ESTRELLAS EN CATÁLOGO</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Planet table -->
+    <div class="dash-card col-2" id="card-planets-table">
+      <div class="dash-card-title">PLANETAS DEL SISTEMA SOLAR — POSICIÓN ACTUAL</div>
+      <table class="planet-table" id="planet-table-body">
+        <tr><td colspan="4" style="color:var(--text-muted);font-family:var(--font-mono);font-size:10px;padding:10px 0;">Calculando posiciones...</td></tr>
+      </table>
+    </div>
+
+    <!-- Activity chart -->
+    <div class="dash-card">
+      <div class="dash-card-title">ACTIVIDAD — ÚLTIMAS 8 SEMANAS</div>
+      <div class="mini-chart" id="activity-chart"></div>
+      <div style="height:20px;"></div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);margin-top:16px;">
+        Sesiones registradas en la app Android
+      </div>
+    </div>
+
+    <!-- Observation timeline -->
+    <div class="dash-card col-2">
+      <div class="dash-card-title">OBSERVACIONES RECIENTES <span>VER TODAS</span></div>
+      <div class="timeline" id="obs-timeline"></div>
+    </div>
+
+    <!-- Most observed -->
+    <div class="dash-card">
+      <div class="dash-card-title">OBJETOS MÁS OBSERVADOS</div>
+      <div class="quick-obj-list" id="top-objects"></div>
+    </div>
+
+    <!-- App sync status -->
+    <div class="dash-card">
+      <div class="dash-card-title">CONEXIÓN CON LA APP</div>
+
+      <div class="sync-status">
+        <div class="sync-dot disconnected" id="sync-dot"></div>
+        <div class="sync-text" id="sync-text">Sin conexión — Modo demostración</div>
+        <div class="sync-time" id="sync-time">—</div>
+      </div>
+
+      <div style="font-family:var(--font-text);font-size:11px;color:var(--text-secondary);line-height:1.7;margin-bottom:14px;">
+        Descarga <strong style="color:var(--text-primary);">AstroSync</strong> para Android y conecta tu cuenta para sincronizar observaciones, configuraciones y sesiones automáticamente.
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <button class="panel-btn primary" id="btn-connect-app">VINCULAR CUENTA ANDROID</button>
+        <button class="panel-btn" id="btn-import-data">IMPORTAR DATOS (CSV)</button>
+        <button class="panel-btn" id="btn-export-data">EXPORTAR OBSERVACIONES</button>
+      </div>
+
+      <div class="section-divider" style="margin-top:16px;">ENDPOINT API</div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);padding:8px;background:var(--bg-input);border:1px solid var(--border);margin-top:6px;word-break:break-all;">
+        POST /api/v1/sync<br>
+        GET /api/v1/observations<br>
+        GET /api/v1/user/stats
+      </div>
+    </div>
+
+    <!-- Observation heatmap -->
+    <div class="dash-card col-full">
+      <div class="dash-card-title">MAPA DE ACTIVIDAD — ÚLTIMO AÑO</div>
+      <div class="heatmap" id="activity-heatmap"></div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:12px;">
+        <span style="font-family:var(--font-mono);font-size:8px;color:var(--text-muted);">Menos</span>
+        <div style="width:11px;height:11px;background:var(--border);"></div>
+        <div style="width:11px;height:11px;" class="heatmap-cell lv1"></div>
+        <div style="width:11px;height:11px;" class="heatmap-cell lv2"></div>
+        <div style="width:11px;height:11px;" class="heatmap-cell lv3"></div>
+        <div style="width:11px;height:11px;" class="heatmap-cell lv4"></div>
+        <span style="font-family:var(--font-mono);font-size:8px;color:var(--text-muted);">Más</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     BOTTOM BAR
+══════════════════════════════════════════ -->
+<div id="bottom-bar">
+  <div class="bottom-segment">
+    <span class="bottom-label">DIRECCIÓN DE VISTA</span>
+    <span class="bottom-value" id="view-az">Az ---°</span>
+    <span class="bottom-value" id="view-alt">Alt ---°</span>
+  </div>
+  <div class="bottom-segment">
+    <span class="bottom-hint">Mapa estelar en tiempo real — Arrastra para rotar la vista</span>
+  </div>
+</div>
+
+<!-- Modal auth (reutilizado) -->
+<div id="modal-auth">
+  <div id="modal-overlay"></div>
+  <div id="modal-box">
+    <div id="modal-header-bar">
+      <span id="modal-logo-text">ASTROSYNC</span>
+      <button id="modal-close">&#215;</button>
+    </div>
+    <div id="modal-tabs">
+      <button class="modal-tab active" data-tab="login">ACCEDER</button>
+      <button class="modal-tab" data-tab="register">REGISTRARSE</button>
+    </div>
+    <div id="modal-form-login" class="modal-form active">
+      <p class="modal-info-text">Accede para ver tus datos de observación sincronizados.</p>
+      <div class="form-group">
+        <label for="login-email">CORREO ELECTRÓNICO</label>
+        <input type="email" id="login-email" placeholder="usuario@ejemplo.com">
+      </div>
+      <div class="form-group">
+        <label for="login-password">CONTRASEÑA</label>
+        <input type="password" id="login-password" placeholder="••••••••">
+      </div>
+      <button class="btn-primary" id="btn-do-login">INGRESAR</button>
+    </div>
+    <div id="modal-form-register" class="modal-form">
+      <div class="form-group">
+        <label for="reg-username">USUARIO</label>
+        <input type="text" id="reg-username" placeholder="ObservadorCeleste">
+      </div>
+      <div class="form-group">
+        <label for="reg-email">CORREO</label>
+        <input type="email" id="reg-email" placeholder="usuario@ejemplo.com">
+      </div>
+      <div class="form-group">
+        <label for="reg-password">CONTRASEÑA</label>
+        <input type="password" id="reg-password" placeholder="••••••••">
+      </div>
+      <button class="btn-primary" id="btn-do-register">CREAR CUENTA</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Scripts ──────────────────────────────── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.js"></script>
+<script src="js/catalog.js"></script>
+<script src="js/astro.js"></script>
+<script src="js/starmap.js"></script>
+
+<script>
+'use strict';
+
+// ── Mock data ────────────────────────────────
+const MOCK_OBS = [
+  { obj:'Nebulosa de Orión (M42)', date:'2026-05-27', time:'23:14', type:'Nebulosa',  mag:4.0,  note:'Vista con binoculares 10x50. Detalle del Trapecio visible.' },
+  { obj:'Júpiter',                 date:'2026-05-25', time:'22:30', type:'Planeta',   mag:-2.1, note:'Bandas nubosas y cuatro lunas galileanas identificadas.' },
+  { obj:'Pléyades (M45)',          date:'2026-05-22', time:'21:45', type:'Cúmulo',    mag:1.6,  note:'Cúmulo espectacular. 7 estrellas a simple vista.' },
+  { obj:'Sirius',                  date:'2026-05-20', time:'20:55', type:'Estrella',  mag:-1.46,note:'Centelleo intenso en el horizonte. Colores espectrales.' },
+  { obj:'Galaxia Andrómeda (M31)', date:'2026-05-18', time:'00:10', type:'Galaxia',   mag:3.4,  note:'Mancha ovalada difusa con poca contaminación lumínica.' },
+  { obj:'Saturno',                 date:'2026-05-15', time:'23:00', type:'Planeta',   mag:0.7,  note:'Anillos perfectamente visibles. Titán identificado.' },
+  { obj:'Cúmulo de Hércules (M13)',date:'2026-05-10', time:'01:20', type:'Cúmulo',    mag:5.8,  note:'Globular resuelto en bordes con telescopio 114mm.' },
+];
+
+const TOP_OBJECTS = [
+  { name:'Orión (M42)',     type:'NEBULOSA',  count:12 },
+  { name:'Júpiter',         type:'PLANETA',   count:9  },
+  { name:'Pléyades (M45)',  type:'CÚMULO',    count:7  },
+  { name:'Sirius',          type:'ESTRELLA',  count:6  },
+  { name:'Saturno',         type:'PLANETA',   count:5  },
+];
+
+// ── Clock ────────────────────────────────────
+function startClock() {
+  function tick() {
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    const t = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const el  = document.getElementById('current-time-display');
+    const el2 = document.getElementById('time-label');
+    const el3 = document.getElementById('date-label');
+    const el4 = document.getElementById('current-date-display');
+    if(el)  el.textContent  = t;
+    if(el2) el2.textContent = t;
+    if(el3) el3.textContent = now.toISOString().split('T')[0].replace(/-/g,'.');
+    if(el4) el4.textContent = now.toLocaleDateString('es-ES',{weekday:'short',year:'numeric',month:'short',day:'numeric'}).toUpperCase();
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+// ── Location ─────────────────────────────────
+function detectLocation() {
+  const loc = document.getElementById('current-location');
+  const nav = document.getElementById('location-display');
+  if(!navigator.geolocation){ if(loc) loc.textContent='Sin geolocalizacion'; return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    const lat=pos.coords.latitude, lon=pos.coords.longitude;
+    AstroMap.setLocation(lat, lon);
+    const ls=`${Math.abs(lat).toFixed(2)}° ${lat>=0?'N':'S'}`;
+    const ll=`${Math.abs(lon).toFixed(2)}° ${lon>=0?'E':'O'}`;
+    if(loc) loc.innerHTML=`<div>${ls}</div><div>${ll}</div>`;
+    if(nav) nav.textContent=`${ls}  ${ll}`;
+    buildPlanetTable();
+    updateStats();
+  }, ()=>{
+    if(loc) loc.textContent='Madrid (defecto)';
+    if(nav) nav.textContent='40.42° N  3.70° O';
+  }, {timeout:6000});
+}
+
+// ── Planet table ─────────────────────────────
+function buildPlanetTable() {
+  const planets = AstroMap.getPlanetVisibility();
+  const sunMoon = (AstroMap.getSunMoonVisibility ? AstroMap.getSunMoonVisibility() : []);
+  const allVisible = [...sunMoon, ...planets];
+
+  document.getElementById('stat-planets').textContent = allVisible.filter(p=>p.alt>10).length;
+
+  // Left panel
+  const vp = document.getElementById('visible-planets');
+  if(vp) vp.innerHTML = allVisible.map(p=>{
+    const extraInfo = p.phaseName ? ` <span style="font-size:9px;color:var(--text-muted);">${p.phaseName}</span>` : '';
+    return `
+    <div class="planet-row">
+      <div class="planet-dot" style="background:${p.colorHex}"></div>
+      <span class="planet-name">${p.name}${extraInfo}</span>
+      <span class="planet-alt ${p.alt>10?'visible':''}">${p.alt!=null?(p.alt>0?'+':'')+p.alt+'°':'—'}</span>
+    </div>`;
+  }).join('');
+
+  // Dashboard table — Sol y Luna primero, luego planetas
+  const tb = document.getElementById('planet-table-body');
+  if(!tb) return;
+  const smRows = sunMoon.map(p => {
+    const phaseNote = p.phaseName ? ` — ${p.phaseName}` : '';
+    return `<tr>
+      <td><div class="planet-table-dot" style="background:${p.colorHex}"></div>${p.name}${phaseNote}</td>
+      <td class="${p.alt>10?'alt-visible':p.alt<0?'alt-below':''}">${p.alt!=null?(p.alt>0?'+':'')+p.alt+'°':'—'}</td>
+      <td class="mag-val">${p.name==='Sol'?'−26.7':'−12.6'}</td>
+      <td style="color:${p.alt>10?'var(--success)':'var(--text-muted)'};">${p.alt>10?'VISIBLE':p.alt>0?'BAJO':'NO VISIBLE'}</td>
+    </tr>`;
+  }).join('');
+  const planetRows = planets.map(p => {
+    return `<tr>
+      <td><div class="planet-table-dot" style="background:${p.colorHex}"></div>${p.name}</td>
+      <td class="${p.alt>10?'alt-visible':p.alt<0?'alt-below':''}">${p.alt!=null?(p.alt>0?'+':'')+p.alt+'°':'—'}</td>
+      <td class="mag-val">${p.mag!=null?Number(p.mag).toFixed(1):'—'}</td>
+      <td style="color:${p.alt>10?'var(--success)':'var(--text-muted)'};">${p.alt>10?'VISIBLE':p.alt>0?'BAJO':'NO VISIBLE'}</td>
+    </tr>`;
+  }).join('');
+  tb.innerHTML = smRows + planetRows;
+}
+
+
+// ── Timeline ─────────────────────────────────
+function buildTimeline() {
+  const el = document.getElementById('obs-timeline');
+  if(!el) return;
+  el.innerHTML = MOCK_OBS.map((o,i) => `
+    <div class="timeline-item ${i<2?'recent':''}">
+      <div class="timeline-date">${o.date}  ${o.time}  —  ${o.type}</div>
+      <div class="timeline-obj">${o.obj}</div>
+      <div class="timeline-note">${o.note}</div>
+    </div>`).join('');
+}
+
+// ── Top objects ───────────────────────────────
+function buildTopObjects() {
+  const el = document.getElementById('top-objects');
+  if(!el) return;
+  el.innerHTML = TOP_OBJECTS.map((o,i) => `
+    <div class="quick-obj-item">
+      <span class="quick-obj-rank">${i+1}</span>
+      <span class="quick-obj-name">${o.name}</span>
+      <span class="quick-obj-type">${o.type}</span>
+      <span class="quick-obj-count">${o.count}</span>
+    </div>`).join('');
+}
+
+// ── Activity chart ────────────────────────────
+function buildActivityChart() {
+  const el = document.getElementById('activity-chart');
+  if(!el) return;
+  const data = [1,3,0,2,5,4,2,7]; // mock
+  const max  = Math.max(...data);
+  const labels = ['Apr','Apr','May','May','May','May','May','May'];
+  el.innerHTML = data.map((v,i) => `
+    <div class="mini-bar ${i===data.length-1?'highlight':''}" style="height:${max>0?Math.round(v/max*46)+2:2}px">
+      <span class="mini-bar-label">${labels[i]}</span>
+    </div>`).join('');
+}
+
+// ── Heatmap ───────────────────────────────────
+function buildHeatmap() {
+  const el = document.getElementById('activity-heatmap');
+  if(!el) return;
+  let html = '';
+  for(let i=0;i<52*7;i++){
+    const r = Math.random();
+    const lv = r<0.6?'':r<0.75?'lv1':r<0.88?'lv2':r<0.96?'lv3':'lv4';
+    html += `<div class="heatmap-cell ${lv}" title="Observación"></div>`;
+  }
+  el.innerHTML = html;
+}
+
+// ── Stats ─────────────────────────────────────
+function updateStats() {
+  document.getElementById('stat-obs').textContent      = MOCK_OBS.length;
+  document.getElementById('stat-sessions').textContent = '8';
+}
+
+// ── Modal ─────────────────────────────────────
+function setupModal() {
+  document.getElementById('btn-login').addEventListener('click',()=>document.getElementById('modal-auth').classList.add('open'));
+  document.getElementById('modal-close').addEventListener('click',()=>document.getElementById('modal-auth').classList.remove('open'));
+  document.getElementById('modal-overlay').addEventListener('click',()=>document.getElementById('modal-auth').classList.remove('open'));
+  document.querySelectorAll('.modal-tab').forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.modal-form').forEach(f=>f.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(`modal-form-${tab.dataset.tab}`).classList.add('active');
+    });
+  });
+  document.getElementById('btn-do-login').addEventListener('click',()=>{
+    const e=document.getElementById('login-email').value.trim();
+    const p=document.getElementById('login-password').value;
+    if(e&&p){
+      document.getElementById('modal-auth').classList.remove('open');
+      document.getElementById('btn-login').textContent=e.split('@')[0].toUpperCase();
+      document.getElementById('sync-dot').className='sync-dot connected';
+      document.getElementById('sync-text').textContent='Conectado — AstroSync Android';
+      document.getElementById('sync-time').textContent='ahora';
+    }
+  });
+  document.getElementById('btn-do-register').addEventListener('click',()=>{
+    document.getElementById('modal-auth').classList.remove('open');
+  });
+  document.getElementById('btn-connect-app').addEventListener('click',()=>document.getElementById('modal-auth').classList.add('open'));
+  document.getElementById('btn-import-data').addEventListener('click',()=>alert('Función disponible en la versión con API.'));
+  document.getElementById('btn-export-data').addEventListener('click',()=>{
+    const csv='Objeto,Fecha,Hora,Tipo,Magnitud,Notas\n'+MOCK_OBS.map(o=>`${o.obj},${o.date},${o.time},${o.type},${o.mag},"${o.note}"`).join('\n');
+    const a=document.createElement('a');
+    a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+    a.download='astrosync-observaciones.csv';
+    a.click();
+  });
+}
+
+// ── Bottom bar update ─────────────────────────
+function startBottomBar() {
+  // AstroMap animate() already updates view-az and view-alt
+}
+
+// ── Boot ─────────────────────────────────────
+window.addEventListener('load', function() {
+  const bar = document.getElementById('loading-bar');
+  bar.style.width = '40%';
+  document.getElementById('loading-status').textContent = 'Iniciando mapa estelar...';
+
+  setTimeout(()=>{
+    try {
+      AstroMap.init(document.getElementById('starmap-canvas'));
+      bar.style.width = '80%';
+
+      setTimeout(()=>{
+        startClock();
+        detectLocation();
+        buildTimeline();
+        buildTopObjects();
+        buildActivityChart();
+        buildHeatmap();
+        buildPlanetTable();
+        updateStats();
+        setupModal();
+        bar.style.width = '100%';
+
+        setTimeout(()=>{
+          const ls = document.getElementById('loading-screen');
+          ls.classList.add('fade-out');
+          setTimeout(()=>ls.style.display='none', 700);
+        }, 350);
+      }, 300);
+    } catch(e){
+      document.getElementById('loading-status').textContent = 'Error: '+e.message;
+      console.error(e);
+    }
+  }, 400);
+});
+</script>
+
+</body>
+</html>

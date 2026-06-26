@@ -1,0 +1,22 @@
+[
+  {"name":"Orion","pairs":[["Betelgeuse","Bellatrix"],["Betelgeuse","Alnitak"],["Bellatrix","Mintaka"],["Mintaka","Alnilam"],["Alnilam","Alnitak"],["Alnitak","Saiph"],["Mintaka","Rigel"],["Saiph","Rigel"],["Bellatrix","Rigel"]]},
+  {"name":"Ursa Major","pairs":[["Dubhe","Merak"],["Merak","Phecda"],["Phecda","Megrez"],["Megrez","Alioth"],["Alioth","Mizar"],["Mizar","Alkaid"],["Megrez","Dubhe"]]},
+  {"name":"Cassiopeia","pairs":[["Caph","Schedar"],["Schedar","Navi"],["Navi","Ruchbah"],["Ruchbah","Segin"]]},
+  {"name":"Scorpius","pairs":[["Graffias","Dschubba"],["Dschubba","Antares"],["Antares","Larawag"],["Larawag","Sargas"],["Sargas","Shaula"]]},
+  {"name":"Leo","pairs":[["Regulus","Algieba"],["Algieba","Adhafera"],["Algieba","Zosma"],["Zosma","Denebola"],["Regulus","Denebola"]]},
+  {"name":"Gemini","pairs":[["Castor","Pollux"],["Castor","Alhena"],["Pollux","Alhena"]]},
+  {"name":"Cygnus","pairs":[["Deneb","Sadr"],["Sadr","Albireo"],["Sadr","Vega"]]},
+  {"name":"Lyra","pairs":[["Vega","Sulafat"]]},
+  {"name":"Taurus","pairs":[["Aldebaran","El Nath"],["Aldebaran","Ain"]]},
+  {"name":"Pegasus","pairs":[["Markab","Scheat"],["Scheat","Alpheratz"],["Alpheratz","Algenib"],["Algenib","Markab"],["Markab","Enif"]]},
+  {"name":"Andromeda","pairs":[["Alpheratz","Mirach"],["Mirach","Almach"]]},
+  {"name":"Perseus","pairs":[["Mirfak","Algol"]]},
+  {"name":"Sagittarius","pairs":[["Kaus Australis","Kaus Media"],["Kaus Media","Nunki"],["Kaus Australis","Nunki"]]},
+  {"name":"Boötes","pairs":[["Arcturus","Izar"],["Arcturus","Muphrid"]]},
+  {"name":"Virgo","pairs":[["Spica","Porrima"]]},
+  {"name":"Draco","pairs":[["Eltanin","Rastaban"],["Rastaban","Thuban"]]},
+  {"name":"Corona Borealis","pairs":[["Alphecca","Nusakan"]]},
+  {"name":"Aquila","pairs":[["Altair","Tarazed"]]},
+  {"name":"Ursa Minor","pairs":[["Polaris","Kochab"]]},
+  {"name":"Scorpius (cola)","pairs":[["Shaula","Sargas"]]}
+]

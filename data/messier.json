@@ -1,0 +1,17 @@
+[
+  {"name":"M1","ra":5.5756,"dec":22.0144,"mag":8.4,"type":"Supernova","con":"Taurus","desc":"Nebulosa del Cangrejo. Remanente de la supernova de 1054 d.C."},
+  {"name":"M3","ra":13.7031,"dec":28.3783,"mag":6.2,"type":"Cúmulo Globular","con":"Canes Venatici","desc":"Uno de los cúmulos globulares más ricos: 500,000 estrellas."},
+  {"name":"M8","ra":18.0622,"dec":-24.3831,"mag":6.0,"type":"Nebulosa Emisión","con":"Sagittarius","desc":"Nebulosa de la Laguna. Activa región de formación estelar."},
+  {"name":"M13","ra":16.6947,"dec":36.4608,"mag":5.8,"type":"Cúmulo Globular","con":"Hercules","desc":"El Gran Cúmulo de Hércules. ~300,000 estrellas en 145 años luz."},
+  {"name":"M20","ra":18.0472,"dec":-22.9714,"mag":8.5,"type":"Nebulosa Emisión","con":"Sagittarius","desc":"Nebulosa Trífida. Cuatro lóbulos de gas divididos por bandas de polvo."},
+  {"name":"M27","ra":19.9936,"dec":22.7214,"mag":7.4,"type":"Nebulosa Planetaria","con":"Vulpecula","desc":"Nebulosa de la Mancuerna. La primera nebulosa planetaria descubierta."},
+  {"name":"M31","ra":0.7122,"dec":41.2689,"mag":3.4,"type":"Galaxia Espiral","con":"Andromeda","desc":"Galaxia de Andrómeda. 2.5 millones de años luz. Visible a simple vista."},
+  {"name":"M42","ra":5.5883,"dec":-5.3900,"mag":4.0,"type":"Nebulosa Emisión","con":"Orion","desc":"Nebulosa de Orión. Vivero estelar a 1,344 años luz. Visible a ojo desnudo."},
+  {"name":"M45","ra":3.7908,"dec":24.1167,"mag":1.6,"type":"Cúmulo Abierto","con":"Taurus","desc":"Las Pléyades. Las Siete Hermanas. Cúmulo joven a 444 años luz."},
+  {"name":"M51","ra":13.4978,"dec":47.1953,"mag":8.4,"type":"Galaxia Espiral","con":"Canes Venatici","desc":"Galaxia del Remolino. Primera galaxia espiral identificada (1845)."},
+  {"name":"M57","ra":18.8931,"dec":33.0289,"mag":8.8,"type":"Nebulosa Planetaria","con":"Lyra","desc":"Nebulosa del Anillo. Remanente de una estrella como el Sol a 2,300 a.l."},
+  {"name":"M64","ra":12.9453,"dec":21.6831,"mag":8.5,"type":"Galaxia","con":"Coma Berenices","desc":"Galaxia del Ojo Negro. Rotación interna inversa."},
+  {"name":"M81","ra":9.9256,"dec":69.0653,"mag":6.9,"type":"Galaxia Espiral","con":"Ursa Major","desc":"Galaxia de Bode. Una de las más brillantes del cielo a 11.8 M. años luz."},
+  {"name":"M82","ra":9.9317,"dec":69.6797,"mag":8.4,"type":"Galaxia Irregular","con":"Ursa Major","desc":"Galaxia del Cigarro. Explosión de formación estelar intensa."},
+  {"name":"M104","ra":12.6667,"dec":-11.6231,"mag":8.0,"type":"Galaxia","con":"Virgo","desc":"Galaxia del Sombrero. Enorme bulbo galáctico y carril de polvo."}
+]

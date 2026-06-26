@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test IO</title>
+</head>
+<body>
+    <h1>Test Socket.IO</h1>
+    <script src="js/socket.io.min.js"></script>
+    <script>
+        console.log("io is:", typeof io);
+        if (typeof io !== 'undefined') {
+            document.body.innerHTML += '<h2 style="color:green">EXITO: io esta definido!</h2>';
+        } else {
+            document.body.innerHTML += '<h2 style="color:red">ERROR: io es undefined</h2>';
+        }
+    </script>
+</body>
+</html>

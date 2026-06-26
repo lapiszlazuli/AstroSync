@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AstroSync — Cartografía Estelarss</title>
+  <meta name="description"
+    content="AstroSync Web: mapa estelar 3D interactivo en tiempo real. Visualiza planetas, estrellas y constelaciones desde cualquier lugar del mundo.">
+  <meta name="theme-color" content="#060810">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/starmap.css">
+</head>
+
+<body>
+
+  <!-- ── LOADING SCREEN ─────────────────────────────── -->
+  <div id="loading-screen">
+    <div class="loading-logo">ASTROSYNC</div>
+    <div class="loading-sub">CARTOGRAFÍA ESTELAR</div>
+    <div class="loading-bar-wrap">
+      <div class="loading-bar" id="loading-bar"></div>
+    </div>
+    <div class="loading-status" id="loading-status">Inicializando motor estelar...</div>
+  </div>
+
+  <!-- ── CANVAS — ALWAYS FULLSCREEN ────────────────── -->
+  <canvas id="starmap-canvas"></canvas>
+
+  <!-- ── PLANET LABELS OVERLAY ─────────────────────── -->
+  <div id="labels-layer"></div>
+
+  <!-- Sky crosshair -->
+  <div id="sky-crosshair"></div>
+
+  <!-- ══════════════════════════════════════════════════
+     TOP NAVIGATION
+══════════════════════════════════════════════════ -->
+  <nav id="top-nav">
+    <div id="nav-logo">
+      <span class="logo-text">ASTROSYNC</span>
+      <span class="logo-sub">CARTOGRAFÍA ESTELAR</span>
+    </div>
+
+    <div id="nav-links">
+      <button class="nav-btn" data-panel="sky">CIELO</button>
+      <button class="nav-btn" data-panel="catalog">CATÁLOGO</button>
+      <button class="nav-btn" data-panel="observations">OBSERVACIONES</button>
+      <a href="dashboard.html" class="nav-btn" id="nav-dashboard-link">DASHBOARD</a>
+    </div>
+
+    <div id="nav-right">
+      <div id="date-control">
+        <button class="date-nav-btn" id="btn-prev-day">&#8249;</button>
+        <div id="date-display" title="Clic para seleccionar fecha">
+          <span id="date-label">----.--.--</span>
+          <span id="time-label">--:--:--</span>
+        </div>
+        <button class="date-nav-btn" id="btn-next-day">&#8250;</button>
+        <button id="btn-now">HOY</button>
+      </div>
+      <div id="location-display">Detectando ubicación...</div>
+      <button id="btn-sync-android" class="nav-btn"
+        style="color:var(--accent); border: 1px solid var(--accent); margin-right: 10px;">SYNC ANDROID</button>
+      <button id="btn-login">ACCEDER</button>
+    </div>
+  </nav>
+
+  <!-- Date picker popup -->
+  <div id="date-picker-wrap">
+    <input type="date" id="date-picker-input">
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+     LEFT INFO PANEL
+══════════════════════════════════════════════════ -->
+  <div id="left-info">
+    <div class="info-section">
+      <div class="info-title">TIEMPO LOCAL</div>
+      <div id="current-time-display">--:--:--</div>
+      <div id="current-date-display">---</div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-title">UBICACIÓN DEL OBSERVADOR</div>
+      <div class="info-value" id="current-location">Detectando...</div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-title">PLANETAS — ALTITUD</div>
+      <div id="visible-planets">
+        <div class="info-value" style="color:var(--text-muted);font-size:10px;">Calculando...</div>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-title">CIELO HOY</div>
+      <div id="sky-stats"></div>
+    </div>
+
+    <div class="info-section" style="border-bottom:none;">
+      <div class="info-title">CONTROLES</div>
+      <div class="info-value" style="font-size:10px;line-height:1.8;color:var(--text-secondary);">
+        Arrastrar — Rotar vista<br>
+        Rueda — Zoom<br>
+        Clic — Info objeto
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+     RIGHT SIDE PANEL (slides in)
+══════════════════════════════════════════════════ -->
+  <div id="side-panel">
+    <div id="panel-header">
+      <span id="panel-title">CIELO</span>
+      <button id="panel-close">&#215;</button>
+    </div>
+    <div id="panel-content"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+     BOTTOM STATUS BAR
+══════════════════════════════════════════════════ -->
+  <div id="bottom-bar">
+    <div class="bottom-segment">
+      <span class="bottom-label">MIRANDO</span>
+      <span class="bottom-value" id="view-az">Az ---°</span>
+      <span class="bottom-value" id="view-alt">Alt ---°</span>
+    </div>
+    <div class="bottom-segment">
+      <span class="bottom-label">OBJETO PRÓXIMO</span>
+      <span class="bottom-value highlight" id="cursor-obj-name">---</span>
+    </div>
+    <div class="bottom-segment">
+      <span class="bottom-hint">ARRASTRA para rotar &nbsp;|&nbsp; RUEDA para zoom &nbsp;|&nbsp; CLIC para
+        identificar</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+     TOOLTIP
+══════════════════════════════════════════════════ -->
+  <div id="tooltip">
+    <div id="tooltip-name"></div>
+    <div id="tooltip-constellation"></div>
+    <div class="tooltip-rows"></div>
+    <div id="tooltip-desc"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+     MODAL — LOGIN / REGISTRO
+══════════════════════════════════════════════════ -->
+  <div id="modal-auth">
+    <div id="modal-overlay"></div>
+    <div id="modal-box">
+      <div id="modal-header-bar">
+        <span id="modal-logo-text">ASTROSYNC</span>
+        <button id="modal-close">&#215;</button>
+      </div>
+      <div id="modal-tabs">
+        <button class="modal-tab active" data-tab="login">ACCEDER</button>
+        <button class="modal-tab" data-tab="register">REGISTRARSE</button>
+      </div>
+
+      <!-- Login Form -->
+      <div id="modal-form-login" class="modal-form active">
+        <p class="modal-info-text">
+          Accede para sincronizar tus observaciones de la app Android con la plataforma web.
+        </p>
+        <div class="form-group">
+          <label for="login-email">CORREO ELECTRÓNICO</label>
+          <input type="email" id="login-email" placeholder="usuario@ejemplo.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="login-password">CONTRASEÑA</label>
+          <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button class="btn-primary" id="btn-do-login">INGRESAR</button>
+        <div class="form-footer">¿Olvidaste tu contraseña? Recuperar acceso</div>
+      </div>
+
+      <!-- Register Form -->
+      <div id="modal-form-register" class="modal-form">
+        <p class="modal-info-text">
+          Crea tu cuenta para registrar observaciones y sincronizarlas con todos tus dispositivos AstroSync.
+        </p>
+        <div class="form-group">
+          <label for="reg-username">NOMBRE DE USUARIO</label>
+          <input type="text" id="reg-username" placeholder="ObservadorCeleste" autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="reg-email">CORREO ELECTRÓNICO</label>
+          <input type="email" id="reg-email" placeholder="usuario@ejemplo.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="reg-password">CONTRASEÑA</label>
+          <input type="password" id="reg-password" placeholder="Mínimo 8 caracteres" autocomplete="new-password">
+        </div>
+        <button class="btn-primary" id="btn-do-register">CREAR CUENTA</button>
+        <div class="modal-info-text" style="margin-top:4px;">
+          Al registrarte aceptas los Términos de Uso de AstroSync.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+     SCRIPTS — load order matters
+══════════════════════════════════════════════════ -->
+  <!-- Three.js r134 — exposes global THREE -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+
+  <!-- Astronomy Engine v2 — local copy (sin dependencia de CDN) -->
+  <script src="js/astronomy.js"></script>
+  <script>
+    // Fallback CDN si el archivo local no cargó
+    if (typeof Astronomy === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.js"><\/script>');
+    }
+  </script>
+
+  <!-- AstroSync modules -->
+  <script src="js/catalog.js?v=2"></script>
+  <script src="js/astro.js?v=2"></script>
+  <script src="js/starmap.js?v=2"></script>
+  <script src="js/ui.js?v=2"></script>
+
+  <!-- ── SYNC MODAL ─────────────────────────────── -->
+  <div id="sync-modal-wrap"
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+    <div class="panel" style="width:300px; padding:20px; text-align:center; position:relative;">
+      <button id="btn-close-sync"
+        style="position:absolute; top:10px; right:10px; background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:16px;">✕</button>
+      <h2 style="color:var(--accent); font-size:16px; margin-bottom:15px; letter-spacing:1px;">SINCRONIZAR ANDROID</h2>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:20px;">Abre AstroSync en tu Android e
+        introduce este código:</p>
+      <div id="sync-code-display"
+        style="font-size:32px; letter-spacing:4px; font-weight:bold; color:var(--text-primary); padding:10px; background:rgba(255,255,255,0.05); border-radius:4px; margin-bottom:20px;">
+        ------</div>
+      <div id="sync-status" style="font-size:11px; color:var(--text-muted); text-transform:uppercase;">Esperando
+        conexión...</div>
+    </div>
+  </div>
+
+  <!-- Socket.io & Sync Logic -->
+  <script src="js/puente.js?v=7"></script>
+  <script src="js/sync.js?v=7"></script>
+
+
+  <!-- Bootstrap sequence -->
+  <script>
+    (function () {
+      const bar = document.getElementById('loading-bar');
+      const status = document.getElementById('loading-status');
+
+      function setProgress(pct, msg) {
+        bar.style.width = pct + '%';
+        status.textContent = msg;
+      }
+
+      setProgress(15, 'Cargando motor 3D...');
+
+      window.addEventListener('load', function () {
+        setProgress(35, 'Compilando catálogo estelar...');
+
+        setTimeout(function () {
+          setProgress(60, 'Calculando posiciones planetarias...');
+
+          setTimeout(function () {
+            try {
+              const canvas = document.getElementById('starmap-canvas');
+              AstroMap.init(canvas);
+              setProgress(85, 'Inicializando interfaz...');
+
+              setTimeout(function () {
+                AstroUI.init();
+                setProgress(100, 'Listo');
+
+                setTimeout(function () {
+                  AstroUI.hideLoadingScreen();
+                }, 400);
+              }, 200);
+            } catch (e) {
+              status.textContent = 'Error al inicializar: ' + e.message;
+              console.error(e);
+            }
+          }, 300);
+        }, 200);
+      });
+    })();
+  </script>
+
+</body>
+
+</html>
